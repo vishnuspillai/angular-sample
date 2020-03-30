@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter } from '@angular/core';
 import { interval, Observable, from, zip, concat } from 'rxjs';
-import { map, startWith, windowToggle, takeUntil, repeatWhen, skipUntil, take, switchMapTo, buffer, switchMap, tap } from 'rxjs/operators';
+import { map, startWith, takeUntil, repeatWhen, buffer, switchMap, first } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -19,7 +19,10 @@ export class AppComponent {
   constructor() {
     this.data$ = interval(500).pipe(
       buffer(this.start$),
-      switchMap(data => interval(500).pipe(startWith(0), takeUntil(this.stop$))),
+      first(data => !!data),
+      repeatWhen(() => this.stop$),
+      switchMap(data => interval(500).pipe(takeUntil(this.stop$))),
+      map(counter => counter + 1),
       startWith(0),
       map(counter => ({ counter })),
     );
